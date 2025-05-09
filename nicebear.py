@@ -81,14 +81,7 @@ def create_template_files():
             .sidebar-header {
                 padding: 15px;
                 border-bottom: 1px solid #ccc;
-                display: flex;
-                align-items: center;
-            }
-            
-            .sidebar-bear-image {
-                width: 30px;
-                height: 30px;
-                margin-right: 10px;
+                text-align: center;
             }
             
             .conversation-list {
@@ -228,7 +221,6 @@ def create_template_files():
         <!-- Sidebar -->
         <div id="sidebar">
             <div class="sidebar-header">
-                <img src="/bear.png" alt="Bear" class="sidebar-bear-image">
                 <h3>Conversations</h3>
             </div>
             <div class="new-chat-btn" onclick="startNewChat()">New Chat</div>
