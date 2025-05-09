@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import requests
 import json
 import os
 import threading
 import webbrowser
-import base64
 import shutil
+import base64
 
 # Ollama API endpoint (default is localhost:11434)
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
@@ -42,6 +42,11 @@ def chat():
     response = generate_response(user_input)
     return jsonify({'response': response})
 
+# Explicitly serve the bear image
+@app.route('/static/images/<path:filename>')
+def serve_image(filename):
+    return send_from_directory(os.path.join(app.root_path, 'static', 'images'), filename)
+
 def open_browser():
     """Open the browser after a short delay"""
     webbrowser.open('http://localhost:5000')
@@ -52,78 +57,82 @@ def create_template_files():
     os.makedirs('templates', exist_ok=True)
     
     # Create static directory for images
-    os.makedirs('static/images', exist_ok=True)
+    os.makedirs(os.path.join('static', 'images'), exist_ok=True)
     
-    # Save the bear image
-    with open('static/images/bear.png', 'wb') as f:
-        # This is a placeholder - we'll need to save the actual image file
-        pass
+    # Embed the bear image directly in the HTML as base64
+    # This is a simple black bear icon that should work regardless of file system issues
+    bear_icon_base64 = '''
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="80" height="80">
+        <path d="M256 0C114.6 0 0 114.6 0 256s114.6 256 256 256s256-114.6 256-256S397.4 0 256 0zM256 464c-114.7 0-208-93.31-208-208S141.3 48 256 48s208 93.31 208 208S370.7 464 256 464zM296 336h-16V248C280 234.8 269.3 224 256 224H216C202.8 224 192 234.8 192 248v88h-16C167.2 336 160 343.2 160 352v16C160 376.8 167.2 384 176 384h120c8.836 0 16-7.164 16-16v-16C312 343.2 304.8 336 296 336zM224 248c0-4.406 3.594-8 8-8h24c4.406 0 8 3.594 8 8v88h-40V248zM368 176c-13.25 0-24 10.75-24 24s10.75 24 24 24s24-10.75 24-24S381.3 176 368 176zM144 176C130.8 176 120 186.8 120 200S130.8 224 144 224S168 213.3 168 200S157.3 176 144 176z"/>
+    </svg>
+    '''
     
-    html_content = '''
+    html_content = f'''
     <!DOCTYPE html>
     <html>
     <head>
         <title>nicebear</title>
         <style>
-            body {
+            body {{
                 font-family: Arial, sans-serif;
                 max-width: 800px;
                 margin: 0 auto;
                 padding: 20px;
-            }
-            .header {
+            }}
+            .header {{
                 display: flex;
                 align-items: center;
                 margin-bottom: 20px;
-            }
-            .bear-image {
+            }}
+            .bear-image {{
                 width: 80px;
                 height: 80px;
                 margin-right: 20px;
-            }
-            #chat-container {
+            }}
+            #chat-container {{
                 height: 500px;
                 border: 1px solid #ccc;
                 padding: 10px;
                 overflow-y: auto;
                 margin-bottom: 10px;
                 background-color: #f9f9f9;
-            }
-            .user-message {
+            }}
+            .user-message {{
                 color: blue;
                 margin-bottom: 10px;
-            }
-            .llm-message {
+            }}
+            .llm-message {{
                 color: green;
                 margin-bottom: 20px;
-            }
-            .thinking {
+            }}
+            .thinking {{
                 color: gray;
                 font-style: italic;
-            }
-            #input-container {
+            }}
+            #input-container {{
                 display: flex;
-            }
-            #user-input {
+            }}
+            #user-input {{
                 flex-grow: 1;
                 padding: 8px;
                 margin-right: 10px;
-            }
-            button {
+            }}
+            button {{
                 padding: 8px 15px;
                 background-color: #4CAF50;
                 color: white;
                 border: none;
                 cursor: pointer;
-            }
-            button:hover {
+            }}
+            button:hover {{
                 background-color: #45a049;
-            }
+            }}
         </style>
     </head>
     <body>
         <div class="header">
-            <img src="/static/images/bear.png" alt="Bear" class="bear-image">
+            <!-- Inline SVG bear icon -->
+            {bear_icon_base64}
             <h1>nicebear</h1>
         </div>
         <div id="chat-container">
@@ -141,34 +150,34 @@ def create_template_files():
             const userInput = document.getElementById('user-input');
             const sendButton = document.getElementById('send-button');
             
-            function addMessage(text, className) {
+            function addMessage(text, className) {{
                 const messageDiv = document.createElement('div');
                 messageDiv.className = className;
                 messageDiv.textContent = text;
                 chatContainer.appendChild(messageDiv);
                 chatContainer.scrollTop = chatContainer.scrollHeight;
                 return messageDiv;
-            }
+            }}
             
-            async function sendMessage() {
+            async function sendMessage() {{
                 const message = userInput.value.trim();
                 if (!message) return;
                 
                 // Add user message
-                addMessage(`You: ${message}`, 'user-message');
+                addMessage(`You: ${{message}}`, 'user-message');
                 userInput.value = '';
                 
                 // Add thinking message
                 const thinkingDiv = addMessage('nicebear says...', 'thinking');
                 
-                try {
-                    const response = await fetch('/api/chat', {
+                try {{
+                    const response = await fetch('/api/chat', {{
                         method: 'POST',
-                        headers: {
+                        headers: {{
                             'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ message }),
-                    });
+                        }},
+                        body: JSON.stringify({{ message }}),
+                    }});
                     
                     const data = await response.json();
                     
@@ -176,22 +185,22 @@ def create_template_files():
                     chatContainer.removeChild(thinkingDiv);
                     
                     // Add LLM response
-                    addMessage(`LLM: ${data.response}`, 'llm-message');
-                } catch (error) {
+                    addMessage(`LLM: ${{data.response}}`, 'llm-message');
+                }} catch (error) {{
                     // Remove thinking message
                     chatContainer.removeChild(thinkingDiv);
                     
                     // Add error message
-                    addMessage(`Error: ${error.message}`, 'llm-message');
-                }
-            }
+                    addMessage(`Error: ${{error.message}}`, 'llm-message');
+                }}
+            }}
             
             sendButton.addEventListener('click', sendMessage);
-            userInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
+            userInput.addEventListener('keypress', (e) => {{
+                if (e.key === 'Enter') {{
                     sendMessage();
-                }
-            });
+                }}
+            }});
         </script>
     </body>
     </html>
@@ -202,9 +211,6 @@ def create_template_files():
 
 if __name__ == '__main__':
     create_template_files()
-    
-    # You'll need to manually save the bear image to static/images/bear.png
-    print("Please save the bear image to 'static/images/bear.png' before refreshing the page")
     
     # Open browser after a short delay
     threading.Timer(1.5, open_browser).start()
