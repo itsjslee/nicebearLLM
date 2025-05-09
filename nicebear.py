@@ -4,8 +4,6 @@ import json
 import os
 import threading
 import webbrowser
-import shutil
-import base64
 
 # Ollama API endpoint (default is localhost:11434)
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
@@ -16,7 +14,7 @@ def generate_response(prompt):
     """Generate a response from the Dolphin-Llama3 model using Ollama API"""
     try:
         data = {
-            "model": "dolphin-llama3:8b",  # You can change to 70b if you have that version
+            "model": "nicebear",  # Using the custom model name
             "prompt": prompt,
             "stream": False
         }
@@ -64,79 +62,271 @@ def create_template_files():
         <style>
             body {
                 font-family: Arial, sans-serif;
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                height: 100vh;
             }
+            
+            /* Sidebar styles */
+            #sidebar {
+                width: 250px;
+                background-color: #f0f0f0;
+                border-right: 1px solid #ccc;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .sidebar-header {
+                padding: 15px;
+                border-bottom: 1px solid #ccc;
+                display: flex;
+                align-items: center;
+            }
+            
+            .sidebar-bear-image {
+                width: 30px;
+                height: 30px;
+                margin-right: 10px;
+            }
+            
+            .conversation-list {
+                flex-grow: 1;
+                overflow-y: auto;
+            }
+            
+            .conversation-item {
+                padding: 10px 15px;
+                border-bottom: 1px solid #ddd;
+                cursor: pointer;
+            }
+            
+            .conversation-item:hover {
+                background-color: #e0e0e0;
+            }
+            
+            .conversation-item.active {
+                background-color: #d0d0d0;
+            }
+            
+            .new-chat-btn {
+                margin: 10px;
+                padding: 8px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                text-align: center;
+            }
+            
+            .new-chat-btn:hover {
+                background-color: #45a049;
+            }
+            
+            /* Main content styles */
+            #main-content {
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                max-width: calc(100% - 250px);
+            }
+            
             .header {
                 display: flex;
                 align-items: center;
-                margin-bottom: 20px;
+                padding: 15px;
+                border-bottom: 1px solid #ccc;
             }
+            
             .bear-image {
-                width: 80px;
-                height: 80px;
-                margin-right: 20px;
+                width: 50px;
+                height: 50px;
+                margin-right: 15px;
             }
+            
             #chat-container {
-                height: 500px;
-                border: 1px solid #ccc;
-                padding: 10px;
+                flex-grow: 1;
+                padding: 15px;
                 overflow-y: auto;
-                margin-bottom: 10px;
                 background-color: #f9f9f9;
             }
+            
             .user-message {
                 color: blue;
                 margin-bottom: 10px;
             }
+            
             .llm-message {
                 color: green;
                 margin-bottom: 20px;
             }
+            
             .thinking {
                 color: gray;
                 font-style: italic;
             }
+            
             #input-container {
                 display: flex;
+                padding: 10px;
+                border-top: 1px solid #ccc;
             }
+            
             #user-input {
                 flex-grow: 1;
-                padding: 8px;
+                padding: 10px;
                 margin-right: 10px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
             }
+            
             button {
-                padding: 8px 15px;
+                padding: 10px 15px;
                 background-color: #4CAF50;
                 color: white;
                 border: none;
+                border-radius: 4px;
                 cursor: pointer;
             }
+            
             button:hover {
                 background-color: #45a049;
             }
         </style>
     </head>
     <body>
-        <div class="header">
-            <img src="/bear.png" alt="Bear" class="bear-image">
-            <h1>nicebear</h1>
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div class="sidebar-header">
+                <img src="/bear.png" alt="Bear" class="sidebar-bear-image">
+                <h3>Conversations</h3>
+            </div>
+            <div class="new-chat-btn" onclick="startNewChat()">New Chat</div>
+            <div id="conversation-list" class="conversation-list">
+                <!-- Conversation history will be populated here -->
+            </div>
         </div>
-        <div id="chat-container">
-            <div>chat with bear</div>
-            <div>type your message</div>
-            <br>
-        </div>
-        <div id="input-container">
-            <input type="text" id="user-input" placeholder="Type your message here...">
-            <button id="send-button">Send</button>
+        
+        <!-- Main Content -->
+        <div id="main-content">
+            <div class="header">
+                <img src="/bear.png" alt="Bear" class="bear-image">
+                <h1>nicebear</h1>
+            </div>
+            <div id="chat-container">
+                <div>chat with bear</div>
+                <div>type your message</div>
+                <br>
+            </div>
+            <div id="input-container">
+                <input type="text" id="user-input" placeholder="Type your message here...">
+                <button id="send-button">Send</button>
+            </div>
         </div>
 
         <script>
             const chatContainer = document.getElementById('chat-container');
             const userInput = document.getElementById('user-input');
             const sendButton = document.getElementById('send-button');
+            const conversationList = document.getElementById('conversation-list');
+            
+            // Store conversations
+            let conversations = [];
+            let currentConversationId = null;
+            
+            // Load conversations from localStorage if available
+            function loadConversations() {
+                const savedConversations = localStorage.getItem('nicebear-conversations');
+                if (savedConversations) {
+                    conversations = JSON.parse(savedConversations);
+                    renderConversationList();
+                }
+                
+                // Start a new chat if no conversations exist
+                if (conversations.length === 0) {
+                    startNewChat();
+                } else {
+                    // Load the most recent conversation
+                    loadConversation(conversations[0].id);
+                }
+            }
+            
+            // Save conversations to localStorage
+            function saveConversations() {
+                localStorage.setItem('nicebear-conversations', JSON.stringify(conversations));
+            }
+            
+            // Render the conversation list in the sidebar
+            function renderConversationList() {
+                conversationList.innerHTML = '';
+                
+                conversations.forEach(conv => {
+                    const item = document.createElement('div');
+                    item.className = 'conversation-item';
+                    if (conv.id === currentConversationId) {
+                        item.classList.add('active');
+                    }
+                    
+                    // Use the first user message as the title, or a default title
+                    let title = 'New conversation';
+                    for (const message of conv.messages) {
+                        if (message.role === 'user') {
+                            title = message.content.substring(0, 25);
+                            if (message.content.length > 25) title += '...';
+                            break;
+                        }
+                    }
+                    
+                    item.textContent = title;
+                    item.onclick = () => loadConversation(conv.id);
+                    conversationList.appendChild(item);
+                });
+            }
+            
+            // Start a new chat
+            function startNewChat() {
+                const newId = Date.now().toString();
+                const newConversation = {
+                    id: newId,
+                    messages: []
+                };
+                
+                // Add to the beginning of the array (most recent first)
+                conversations.unshift(newConversation);
+                currentConversationId = newId;
+                
+                // Clear the chat container
+                chatContainer.innerHTML = '<div>chat with bear</div><div>type your message</div><br>';
+                
+                // Update UI
+                renderConversationList();
+                saveConversations();
+            }
+            
+            // Load a conversation
+            function loadConversation(id) {
+                const conversation = conversations.find(c => c.id === id);
+                if (!conversation) return;
+                
+                currentConversationId = id;
+                
+                // Clear the chat container
+                chatContainer.innerHTML = '';
+                
+                // Render all messages
+                conversation.messages.forEach(msg => {
+                    if (msg.role === 'user') {
+                        addMessage(`You: ${msg.content}`, 'user-message');
+                    } else if (msg.role === 'assistant') {
+                        addMessage(`LLM: ${msg.content}`, 'llm-message');
+                    }
+                });
+                
+                // Update UI
+                renderConversationList();
+            }
             
             function addMessage(text, className) {
                 const messageDiv = document.createElement('div');
@@ -147,13 +337,27 @@ def create_template_files():
                 return messageDiv;
             }
             
+            function getCurrentConversation() {
+                return conversations.find(c => c.id === currentConversationId);
+            }
+            
             async function sendMessage() {
                 const message = userInput.value.trim();
                 if (!message) return;
                 
+                // Get current conversation
+                const conversation = getCurrentConversation();
+                if (!conversation) return;
+                
                 // Add user message
                 addMessage(`You: ${message}`, 'user-message');
                 userInput.value = '';
+                
+                // Store the message
+                conversation.messages.push({
+                    role: 'user',
+                    content: message
+                });
                 
                 // Add thinking message
                 const thinkingDiv = addMessage('nicebear says...', 'thinking');
@@ -174,6 +378,18 @@ def create_template_files():
                     
                     // Add LLM response
                     addMessage(`LLM: ${data.response}`, 'llm-message');
+                    
+                    // Store the response
+                    conversation.messages.push({
+                        role: 'assistant',
+                        content: data.response
+                    });
+                    
+                    // Update the conversation list (in case this is the first message)
+                    renderConversationList();
+                    
+                    // Save to localStorage
+                    saveConversations();
                 } catch (error) {
                     // Remove thinking message
                     chatContainer.removeChild(thinkingDiv);
@@ -189,6 +405,9 @@ def create_template_files():
                     sendMessage();
                 }
             });
+            
+            // Initialize
+            loadConversations();
         </script>
     </body>
     </html>
