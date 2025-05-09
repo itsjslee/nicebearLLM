@@ -4,11 +4,13 @@ import json
 import os
 import threading
 import webbrowser
+import base64
+import shutil
 
 # Ollama API endpoint (default is localhost:11434)
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 def generate_response(prompt):
     """Generate a response from the Dolphin-Llama3 model using Ollama API"""
@@ -46,19 +48,38 @@ def open_browser():
 
 # Create templates directory and HTML file
 def create_template_files():
+    # Create templates directory
     os.makedirs('templates', exist_ok=True)
+    
+    # Create static directory for images
+    os.makedirs('static/images', exist_ok=True)
+    
+    # Save the bear image
+    with open('static/images/bear.png', 'wb') as f:
+        # This is a placeholder - we'll need to save the actual image file
+        pass
     
     html_content = '''
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Chat with Dolphin-Llama3</title>
+        <title>nicebear</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
                 max-width: 800px;
                 margin: 0 auto;
                 padding: 20px;
+            }
+            .header {
+                display: flex;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+            .bear-image {
+                width: 80px;
+                height: 80px;
+                margin-right: 20px;
             }
             #chat-container {
                 height: 500px;
@@ -101,10 +122,13 @@ def create_template_files():
         </style>
     </head>
     <body>
-        <h1>Chat with Dolphin-Llama3</h1>
+        <div class="header">
+            <img src="/static/images/bear.png" alt="Bear" class="bear-image">
+            <h1>nicebear</h1>
+        </div>
         <div id="chat-container">
-            <div>Welcome to Dolphin-Llama3 Chat!</div>
-            <div>Type your message and press Enter or click Send.</div>
+            <div>chat with bear</div>
+            <div>type your message</div>
             <br>
         </div>
         <div id="input-container">
@@ -135,7 +159,7 @@ def create_template_files():
                 userInput.value = '';
                 
                 // Add thinking message
-                const thinkingDiv = addMessage('LLM: Thinking...', 'thinking');
+                const thinkingDiv = addMessage('nicebear says...', 'thinking');
                 
                 try {
                     const response = await fetch('/api/chat', {
@@ -178,7 +202,12 @@ def create_template_files():
 
 if __name__ == '__main__':
     create_template_files()
+    
+    # You'll need to manually save the bear image to static/images/bear.png
+    print("Please save the bear image to 'static/images/bear.png' before refreshing the page")
+    
     # Open browser after a short delay
     threading.Timer(1.5, open_browser).start()
+    
     # Run the Flask app
     app.run(debug=True) 

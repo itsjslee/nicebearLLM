@@ -10,6 +10,16 @@
                 margin: 0 auto;
                 padding: 20px;
             }
+            .header {
+                display: flex;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+            .bear-image {
+                width: 80px;
+                height: 80px;
+                margin-right: 20px;
+            }
             #chat-container {
                 height: 500px;
                 border: 1px solid #ccc;
@@ -51,7 +61,10 @@
         </style>
     </head>
     <body>
-        <h1>nicebear</h1>
+        <div class="header">
+            <img src="/static/images/bear.png" alt="Bear" class="bear-image">
+            <h1>nicebear</h1>
+        </div>
         <div id="chat-container">
             <div>chat with bear</div>
             <div>type your message</div>
