@@ -41,9 +41,9 @@ def chat():
     return jsonify({'response': response})
 
 # Explicitly serve the bear image
-@app.route('/bear.png')
+@app.route('/lightbear.png')
 def serve_bear_image():
-    return send_from_directory(app.root_path, 'bear.png')
+    return send_from_directory(app.root_path, 'lightbear.png')
 
 def open_browser():
     """Open the browser after a short delay"""
@@ -232,7 +232,7 @@ def create_template_files():
         <!-- Main Content -->
         <div id="main-content">
             <div class="header">
-                <img src="/bear.png" alt="Bear" class="bear-image">
+                <img src="/lightbear.png" alt="Bear" class="bear-image">
                 <h1>nicebear</h1>
             </div>
             <div id="chat-container">
@@ -483,7 +483,7 @@ def create_template_files():
 if __name__ == '__main__':
     create_template_files()
     
-    print("IMPORTANT: Please save your bear image as 'bear.png' in the same directory as this script")
+    print("IMPORTANT: Please save your bear image as 'lightbear.png' in the same directory as this script")
     
     # Open browser after a short delay
     threading.Timer(1.5, open_browser).start()
