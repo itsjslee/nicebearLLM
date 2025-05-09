@@ -40,10 +40,14 @@ def chat():
     response = generate_response(user_input)
     return jsonify({'response': response})
 
-# Explicitly serve the bear image
+# Explicitly serve the bear images
 @app.route('/lightbear.png')
-def serve_bear_image():
+def serve_light_bear_image():
     return send_from_directory(app.root_path, 'lightbear.png')
+
+@app.route('/darkbear.png')
+def serve_dark_bear_image():
+    return send_from_directory(app.root_path, 'darkbear.png')
 
 def open_browser():
     """Open the browser after a short delay"""
@@ -60,19 +64,59 @@ def create_template_files():
     <head>
         <title>nicebear</title>
         <style>
+            :root {
+                --bg-color: #ffffff;
+                --sidebar-bg: #f0f0f0;
+                --border-color: #ccc;
+                --text-color: #000000;
+                --chat-bg: #f9f9f9;
+                --user-msg-color: #0000ff;
+                --llm-msg-color: #008000;
+                --thinking-color: #808080;
+                --hover-color: #e0e0e0;
+                --active-color: #d0d0d0;
+                --button-bg: #4CAF50;
+                --button-color: white;
+                --button-hover: #45a049;
+                --delete-btn-color: #ff4d4d;
+                --delete-btn-hover: #ffcccc;
+                --input-bg: #ffffff;
+            }
+            
+            .dark-mode {
+                --bg-color: #1e1e1e;
+                --sidebar-bg: #2d2d2d;
+                --border-color: #444;
+                --text-color: #e0e0e0;
+                --chat-bg: #2a2a2a;
+                --user-msg-color: #7070ff;
+                --llm-msg-color: #70c070;
+                --thinking-color: #a0a0a0;
+                --hover-color: #3a3a3a;
+                --active-color: #454545;
+                --button-bg: #388e3c;
+                --button-color: #e0e0e0;
+                --button-hover: #2e7d32;
+                --delete-btn-color: #ff6b6b;
+                --delete-btn-hover: #ff9e9e;
+                --input-bg: #333333;
+            }
+            
             body {
                 font-family: Arial, sans-serif;
                 margin: 0;
                 padding: 0;
                 display: flex;
                 height: 100vh;
+                background-color: var(--bg-color);
+                color: var(--text-color);
             }
             
             /* Sidebar styles */
             #sidebar {
                 width: 250px;
-                background-color: #f0f0f0;
-                border-right: 1px solid #ccc;
+                background-color: var(--sidebar-bg);
+                border-right: 1px solid var(--border-color);
                 overflow-y: auto;
                 display: flex;
                 flex-direction: column;
@@ -80,7 +124,7 @@ def create_template_files():
             
             .sidebar-header {
                 padding: 15px;
-                border-bottom: 1px solid #ccc;
+                border-bottom: 1px solid var(--border-color);
                 text-align: center;
             }
             
@@ -91,7 +135,7 @@ def create_template_files():
             
             .conversation-item {
                 padding: 10px 15px;
-                border-bottom: 1px solid #ddd;
+                border-bottom: 1px solid var(--border-color);
                 cursor: pointer;
                 position: relative;
                 display: flex;
@@ -100,16 +144,16 @@ def create_template_files():
             }
             
             .conversation-item:hover {
-                background-color: #e0e0e0;
+                background-color: var(--hover-color);
             }
             
             .conversation-item.active {
-                background-color: #d0d0d0;
+                background-color: var(--active-color);
             }
             
             .delete-btn {
                 visibility: hidden;
-                color: #ff4d4d;
+                color: var(--delete-btn-color);
                 cursor: pointer;
                 font-weight: bold;
                 padding: 2px 6px;
@@ -117,7 +161,7 @@ def create_template_files():
             }
             
             .delete-btn:hover {
-                background-color: #ffcccc;
+                background-color: var(--delete-btn-hover);
             }
             
             .conversation-item:hover .delete-btn {
@@ -134,8 +178,8 @@ def create_template_files():
             .new-chat-btn {
                 margin: 10px;
                 padding: 8px;
-                background-color: #4CAF50;
-                color: white;
+                background-color: var(--button-bg);
+                color: var(--button-color);
                 border: none;
                 border-radius: 4px;
                 cursor: pointer;
@@ -143,7 +187,7 @@ def create_template_files():
             }
             
             .new-chat-btn:hover {
-                background-color: #45a049;
+                background-color: var(--button-hover);
             }
             
             /* Main content styles */
@@ -152,13 +196,14 @@ def create_template_files():
                 display: flex;
                 flex-direction: column;
                 max-width: calc(100% - 250px);
+                position: relative;
             }
             
             .header {
                 display: flex;
                 align-items: center;
                 padding: 15px;
-                border-bottom: 1px solid #ccc;
+                border-bottom: 1px solid var(--border-color);
             }
             
             .bear-image {
@@ -167,53 +212,71 @@ def create_template_files():
                 margin-right: 15px;
             }
             
+            #theme-toggle {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                cursor: pointer;
+                background-color: var(--button-bg);
+                color: var(--button-color);
+                border: none;
+                border-radius: 4px;
+                padding: 5px 10px;
+            }
+            
+            #theme-toggle:hover {
+                background-color: var(--button-hover);
+            }
+            
             #chat-container {
                 flex-grow: 1;
                 padding: 15px;
                 overflow-y: auto;
-                background-color: #f9f9f9;
+                background-color: var(--chat-bg);
             }
             
             .user-message {
-                color: blue;
+                color: var(--user-msg-color);
                 margin-bottom: 10px;
             }
             
             .llm-message {
-                color: green;
+                color: var(--llm-msg-color);
                 margin-bottom: 20px;
             }
             
             .thinking {
-                color: gray;
+                color: var(--thinking-color);
                 font-style: italic;
             }
             
             #input-container {
                 display: flex;
                 padding: 10px;
-                border-top: 1px solid #ccc;
+                border-top: 1px solid var(--border-color);
             }
             
             #user-input {
                 flex-grow: 1;
                 padding: 10px;
                 margin-right: 10px;
-                border: 1px solid #ccc;
+                border: 1px solid var(--border-color);
                 border-radius: 4px;
+                background-color: var(--input-bg);
+                color: var(--text-color);
             }
             
             button {
                 padding: 10px 15px;
-                background-color: #4CAF50;
-                color: white;
+                background-color: var(--button-bg);
+                color: var(--button-color);
                 border: none;
                 border-radius: 4px;
                 cursor: pointer;
             }
             
             button:hover {
-                background-color: #45a049;
+                background-color: var(--button-hover);
             }
         </style>
     </head>
@@ -232,8 +295,9 @@ def create_template_files():
         <!-- Main Content -->
         <div id="main-content">
             <div class="header">
-                <img src="/lightbear.png" alt="Bear" class="bear-image">
+                <img src="/lightbear.png" alt="Bear" class="bear-image" id="bear-image">
                 <h1>nicebear</h1>
+                <button id="theme-toggle">🌙 Dark Mode</button>
             </div>
             <div id="chat-container">
                 <div>chat with bear</div>
@@ -251,10 +315,42 @@ def create_template_files():
             const userInput = document.getElementById('user-input');
             const sendButton = document.getElementById('send-button');
             const conversationList = document.getElementById('conversation-list');
+            const themeToggle = document.getElementById('theme-toggle');
+            const bearImage = document.getElementById('bear-image');
+            const body = document.body;
             
             // Store conversations
             let conversations = [];
             let currentConversationId = null;
+            
+            // Theme management
+            function toggleTheme() {
+                if (body.classList.contains('dark-mode')) {
+                    // Switch to light mode
+                    body.classList.remove('dark-mode');
+                    themeToggle.textContent = '🌙 Dark Mode';
+                    bearImage.src = '/lightbear.png';
+                    localStorage.setItem('nicebear-theme', 'light');
+                } else {
+                    // Switch to dark mode
+                    body.classList.add('dark-mode');
+                    themeToggle.textContent = '☀️ Light Mode';
+                    bearImage.src = '/darkbear.png';
+                    localStorage.setItem('nicebear-theme', 'dark');
+                }
+            }
+            
+            // Initialize theme based on saved preference
+            function initTheme() {
+                const savedTheme = localStorage.getItem('nicebear-theme');
+                if (savedTheme === 'dark') {
+                    body.classList.add('dark-mode');
+                    themeToggle.textContent = '☀️ Light Mode';
+                    bearImage.src = '/darkbear.png';
+                }
+            }
+            
+            themeToggle.addEventListener('click', toggleTheme);
             
             // Load conversations from localStorage if available
             function loadConversations() {
@@ -470,6 +566,7 @@ def create_template_files():
             });
             
             // Initialize
+            initTheme();
             loadConversations();
         </script>
     </body>
@@ -483,7 +580,7 @@ def create_template_files():
 if __name__ == '__main__':
     create_template_files()
     
-    print("IMPORTANT: Please save your bear image as 'lightbear.png' in the same directory as this script")
+    print("IMPORTANT: Please save your bear images as 'lightbear.png' and 'darkbear.png' in the same directory as this script")
     
     # Open browser after a short delay
     threading.Timer(1.5, open_browser).start()
