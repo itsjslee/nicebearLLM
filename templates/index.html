@@ -1,54 +1,4 @@
-from flask import Flask, render_template, request, jsonify
-import requests
-import json
-import os
-import threading
-import webbrowser
 
-# Ollama API endpoint (default is localhost:11434)
-OLLAMA_API_URL = "http://localhost:11434/api/generate"
-
-app = Flask(__name__)
-
-def generate_response(prompt):
-    """Generate a response from the Dolphin-Llama3 model using Ollama API"""
-    try:
-        data = {
-            "model": "dolphin-llama3:8b",  # You can change to 70b if you have that version
-            "prompt": prompt,
-            "stream": False
-        }
-        
-        response = requests.post(OLLAMA_API_URL, json=data)
-        if response.status_code == 200:
-            return response.json().get('response', 'No response generated')
-        else:
-            return f"Error: {response.status_code} - {response.text}"
-    except Exception as e:
-        return f"Error generating response: {str(e)}"
-
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    user_input = request.json.get('message', '')
-    if not user_input.strip():
-        return jsonify({'response': 'Please enter a message'})
-    
-    response = generate_response(user_input)
-    return jsonify({'response': response})
-
-def open_browser():
-    """Open the browser after a short delay"""
-    webbrowser.open('http://localhost:5000')
-
-# Create templates directory and HTML file
-def create_template_files():
-    os.makedirs('templates', exist_ok=True)
-    
-    html_content = '''
     <!DOCTYPE html>
     <html>
     <head>
@@ -171,14 +121,4 @@ def create_template_files():
         </script>
     </body>
     </html>
-    '''
     
-    with open('templates/index.html', 'w') as f:
-        f.write(html_content)
-
-if __name__ == '__main__':
-    create_template_files()
-    # Open browser after a short delay
-    threading.Timer(1.5, open_browser).start()
-    # Run the Flask app
-    app.run(debug=True) 
