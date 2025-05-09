@@ -100,6 +100,10 @@ def create_template_files():
                 padding: 10px 15px;
                 border-bottom: 1px solid #ddd;
                 cursor: pointer;
+                position: relative;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
             }
             
             .conversation-item:hover {
@@ -108,6 +112,30 @@ def create_template_files():
             
             .conversation-item.active {
                 background-color: #d0d0d0;
+            }
+            
+            .delete-btn {
+                visibility: hidden;
+                color: #ff4d4d;
+                cursor: pointer;
+                font-weight: bold;
+                padding: 2px 6px;
+                border-radius: 3px;
+            }
+            
+            .delete-btn:hover {
+                background-color: #ffcccc;
+            }
+            
+            .conversation-item:hover .delete-btn {
+                visibility: visible;
+            }
+            
+            .conversation-title {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                flex-grow: 1;
             }
             
             .new-chat-btn {
@@ -258,6 +286,34 @@ def create_template_files():
                 localStorage.setItem('nicebear-conversations', JSON.stringify(conversations));
             }
             
+            // Delete a conversation
+            function deleteConversation(id, event) {
+                // Prevent the click from propagating to the parent (which would load the conversation)
+                event.stopPropagation();
+                
+                // Ask for confirmation
+                if (confirm('Are you sure you want to delete this conversation?')) {
+                    // Remove the conversation from the array
+                    const index = conversations.findIndex(c => c.id === id);
+                    if (index !== -1) {
+                        conversations.splice(index, 1);
+                    }
+                    
+                    // If we deleted the current conversation, load another one
+                    if (id === currentConversationId) {
+                        if (conversations.length > 0) {
+                            loadConversation(conversations[0].id);
+                        } else {
+                            startNewChat();
+                        }
+                    }
+                    
+                    // Update UI and save
+                    renderConversationList();
+                    saveConversations();
+                }
+            }
+            
             // Render the conversation list in the sidebar
             function renderConversationList() {
                 conversationList.innerHTML = '';
@@ -279,8 +335,23 @@ def create_template_files():
                         }
                     }
                     
-                    item.textContent = title;
+                    // Create title span
+                    const titleSpan = document.createElement('span');
+                    titleSpan.className = 'conversation-title';
+                    titleSpan.textContent = title;
+                    item.appendChild(titleSpan);
+                    
+                    // Create delete button
+                    const deleteBtn = document.createElement('span');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = 'x';
+                    deleteBtn.title = 'Delete conversation';
+                    deleteBtn.onclick = (e) => deleteConversation(conv.id, e);
+                    item.appendChild(deleteBtn);
+                    
+                    // Set click handler for the item
                     item.onclick = () => loadConversation(conv.id);
+                    
                     conversationList.appendChild(item);
                 });
             }
@@ -413,7 +484,8 @@ def create_template_files():
     </html>
     '''
     
-    with open('templates/index.html', 'w') as f:
+    # Write the file with explicit UTF-8 encoding
+    with open('templates/index.html', 'w', encoding='utf-8') as f:
         f.write(html_content)
 
 if __name__ == '__main__':
