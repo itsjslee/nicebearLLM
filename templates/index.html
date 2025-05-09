@@ -33,7 +33,7 @@
                 margin-bottom: 10px;
             }
             .llm-message {
-                color: red;
+                color: green;
                 margin-bottom: 20px;
             }
             .thinking {
@@ -50,13 +50,13 @@
             }
             button {
                 padding: 8px 15px;
-                background-color: #000000;
+                background-color: #4CAF50;
                 color: white;
                 border: none;
                 cursor: pointer;
             }
             button:hover {
-                background-color: #000000;
+                background-color: #45a049;
             }
         </style>
     </head>
@@ -115,7 +115,7 @@
                     chatContainer.removeChild(thinkingDiv);
                     
                     // Add LLM response
-                    addMessage(`nicebear says: ${data.response}`, 'llm-message');
+                    addMessage(`LLM: ${data.response}`, 'llm-message');
                 } catch (error) {
                     // Remove thinking message
                     chatContainer.removeChild(thinkingDiv);
